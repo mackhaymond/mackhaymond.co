@@ -73,7 +73,6 @@ svg{flex:none}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation:none!important}}
 `;
 
-const LOCK = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 
 const CHEVRON = `<svg class="chev" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
@@ -125,8 +124,6 @@ h1{margin:0;font-size:clamp(28px,4.2vw,34px);line-height:1.1;font-weight:600;let
 .contact{display:flex;flex-wrap:wrap;gap:4px 20px;margin:20px 0 0;padding:0;list-style:none;color:var(--fg-muted)}
 .contact a:hover{color:var(--fg)}
 h2{margin:0 0 12px;font-size:13px;line-height:20px;font-weight:500;color:var(--faint)}
-.all{display:inline-block;margin-top:16px;font-size:13px;color:var(--fg-muted)}
-.all:hover{color:var(--fg)}
 .work{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--border)}
 .work li{border-top:1px solid var(--border)}
 .work a{display:grid;grid-template-columns:1fr auto;gap:2px 24px;margin:0 -12px;padding:16px 12px 18px;border-radius:4px;text-decoration:none}
@@ -136,8 +133,7 @@ h2{margin:0 0 12px;font-size:13px;line-height:20px;font-weight:500;color:var(--f
 .work a:hover h3 span{text-decoration-color:currentColor}
 .work p{grid-column:1;margin:0;color:var(--fg-muted);max-width:52ch;text-wrap:pretty}
 .stack{grid-column:2;grid-row:1;align-self:baseline;font:400 12px/24px var(--mono);color:var(--faint);white-space:nowrap}
-footer{max-width:820px;margin:clamp(80px,12vw,128px) auto 0;padding:0 24px}
-footer>div{padding:20px 0 40px;border-top:1px solid var(--border);font-size:13px;line-height:20px;color:var(--faint)}
+main.page{padding-bottom:clamp(80px,12vw,128px)}
 @media (min-width:760px){
   .page{display:grid;grid-template-columns:148px minmax(0,1fr);column-gap:40px}
   .page>*{grid-column:2}
@@ -146,7 +142,7 @@ footer>div{padding:20px 0 40px;border-top:1px solid var(--border);font-size:13px
 }
 @media (max-width:759px){h2.sec-start{margin-top:clamp(64px,10vw,104px)}}
 @media (max-width:479px){
-  .page,footer{padding:0 20px}
+  .page{padding-left:20px;padding-right:20px}
   .work a{grid-template-columns:1fr;padding-top:14px;padding-bottom:16px}
   .stack{grid-column:1;grid-row:auto;order:3;line-height:20px;margin-top:6px}
 }
@@ -184,10 +180,8 @@ export function renderHome(featured: Entry[], session: { email: string } | null)
   <h2 id="work" class="sec-start">Projects</h2>
   <div class="sec-start">
     <ul class="work" aria-labelledby="work">${rows}</ul>
-    <a class="all" href="https://github.com/mackhaymond?tab=repositories">More on GitHub</a>
   </div>
-</main>
-<footer><div>© ${new Date().getFullYear()} Mack Haymond</div></footer>`,
+</main>`,
   });
 }
 
@@ -215,20 +209,17 @@ const DASH_CSS = `
 .bar{position:sticky;top:0;z-index:9;padding:8px 0 12px;background:color-mix(in srgb,var(--page) 90%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .search{position:relative;display:flex;align-items:center}
 .search>svg{position:absolute;left:14px;color:var(--fg-muted);pointer-events:none}
-.search input{width:100%;height:44px;padding:0 64px 0 42px;border:0;border-radius:10px;background:var(--bg-100);box-shadow:0 0 0 1px var(--border);color:var(--fg);font:400 15px/20px var(--sans);transition:box-shadow var(--t-fast) var(--ease)}
+.search input{width:100%;height:44px;padding:0 14px 0 42px;border:0;border-radius:10px;background:var(--bg-100);box-shadow:0 0 0 1px var(--border);color:var(--fg);font:400 15px/20px var(--sans);transition:box-shadow var(--t-fast) var(--ease)}
 .search input::placeholder{color:var(--fg-faint)}
 .search input:hover{box-shadow:0 0 0 1px var(--border-hover)}
 .search input:focus{outline:none;box-shadow:0 0 0 1px var(--alpha-600),var(--ring)}
 .search input::-webkit-search-cancel-button{display:none}
-.search .kbds{position:absolute;right:12px;display:flex;gap:4px;pointer-events:none}
-kbd{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:4px;background:var(--bg-200);box-shadow:0 0 0 1px var(--border);font:500 11px/1 var(--mono);color:var(--fg-muted)}
 #alert{display:flex;flex-wrap:wrap;gap:4px 14px;margin:10px 2px 0;font-size:13px;color:var(--fg-muted)}
 #alert span{display:inline-flex;align-items:center;gap:6px}
 .sec{margin-top:28px;scroll-margin-top:80px}
 .sec-h{display:flex;align-items:baseline;gap:8px;margin:0 0 10px 2px}
 h2{margin:0;font-size:13px;line-height:20px;font-weight:500;color:var(--fg-muted)}
 .count{font:400 12px/20px var(--mono);color:var(--fg-faint)}
-.note{font-size:12px;color:var(--fg-faint)}
 summary.sec-h{cursor:pointer;list-style:none;width:max-content;border-radius:var(--r-sm);padding-right:6px}
 summary.sec-h::-webkit-details-marker{display:none}
 summary.sec-h:hover h2{color:var(--fg)}
@@ -248,18 +239,14 @@ div.it{cursor:pointer}
 .desc{display:block;font-size:13px;line-height:18px;color:var(--fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .meta{margin-left:auto;padding-left:8px;flex:none;font:400 11px/16px var(--mono);color:var(--fg-faint);white-space:nowrap}
 .grp{display:none}
-.lock,.pinmark{flex:none;display:inline-flex;color:var(--fg-faint)}
-.pinmark{display:none;--star-fill:currentColor}
-li.pinned .pinmark{display:inline-flex}
 li.copied .meta::before{content:"copied ";color:var(--green)}
 .badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:var(--r-full);font:500 11px/16px var(--sans)}
 .badge.degraded{background:var(--amber-bg);color:var(--amber-fg)}
 .badge.down{background:var(--red-bg);color:var(--red-fg)}
-.dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--gray-500)}
-.dot.up{background:var(--green)}
+.dot{display:none;flex:none;width:7px;height:7px;border-radius:50%}
+.dot.degraded,.dot.down{display:block}
 .dot.degraded{background:var(--amber)}
 .dot.down{background:var(--red);animation:pulse 2s var(--ease) infinite}
-.dot.checking{animation:pulse 1.2s var(--ease) infinite}
 @keyframes pulse{50%{opacity:.4}}
 .acts{position:absolute;display:none;gap:2px}
 .act{display:grid;place-items:center;width:26px;height:26px;border:0;border-radius:var(--r-sm);background:var(--bg-100);color:var(--fg-muted);cursor:pointer;transition:background var(--t-fast),color var(--t-fast)}
@@ -274,7 +261,6 @@ li.pinned .act.pin{color:var(--fg);--star-fill:currentColor}
 .tiles .host{margin-top:2px}
 .tiles .desc{margin-top:6px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .tiles .acts{top:8px;right:8px}
-.tiles .lock,#pinned .pinmark{display:none}
 
 .compact{columns:3 240px;column-gap:28px}
 .compact li{break-inside:avoid}
@@ -300,7 +286,7 @@ li.pinned .act.pin{color:var(--fg);--star-fill:currentColor}
 .empty b{color:var(--fg);font-weight:500}
 main{padding-bottom:64px}
 @media (max-width:719px){.results .it{grid-template-columns:minmax(0,1fr)}.results .desc{display:none}}
-@media (max-width:639px){.tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.tiles .desc{display:none}.search .kbds{display:none}.search input{padding-right:14px}}
+@media (max-width:639px){.tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.tiles .desc{display:none}}
 `;
 
 const DASH_JS = `
@@ -309,18 +295,15 @@ const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{re
 const ORIG=[...G.querySelectorAll("li[data-id]")],byId=new Map(ORIG.map(li=>[li.dataset.id,li]));
 let pins=new Set(PINS.filter(id=>byId.has(id))),recent=store.get("mh.recent",[]).filter(id=>byId.has(id));
 const PRI={Tools:12,Sites:10,Projects:10,Admin:8,Repos:6,Local:4,Scratch:-10,Coursework:-10,Archive:-15};
-const mac=/Mac|iP(hone|ad)/.test(navigator.platform||navigator.userAgent);
-const setHint=()=>{const k1=$("#k1"),k2=$("#k2");if(q.value){k1.textContent="esc";k2.hidden=true}else{k1.textContent=mac?"⌘":"Ctrl";k2.hidden=false}};
-setHint();
 
 const clone=li=>{const c=li.cloneNode(true);c.dataset.clone="";c.hidden=false;c.querySelector(".it").classList.remove("active");return c};
-function fill(sec,ids){sec.querySelector("ul").replaceChildren(...ids.map(id=>clone(byId.get(id))));sec.querySelector(".count").textContent=ids.length}
+function fill(sec,ids){sec.querySelector("ul").replaceChildren(...ids.map(id=>clone(byId.get(id))))}
 function sections(){
   ORIG.forEach(li=>li.classList.toggle("pinned",pins.has(li.dataset.id)));
   // A pinned tile moves up to Pinned instead of showing twice.
   G.querySelectorAll(".tiles").forEach(ul=>{
     let c=0;for(const li of ul.children){li.hidden=pins.has(li.dataset.id);c+=!li.hidden}
-    const sec=ul.closest(".sec");sec.hidden=!c;sec.querySelector(".count").textContent=c;
+    ul.closest(".sec").hidden=!c;
   });
   fill($("#pinned"),[...pins]);
   fill($("#recent"),recent.filter(id=>!pins.has(id)).slice(0,8));
@@ -346,13 +329,13 @@ function score(li,terms){
 function search(){
   const t=q.value.trim().toLowerCase().split(" ").filter(Boolean),on=t.length>0;
   G.hidden=on;$("#pinned").hidden=on||!pins.size;$("#recent").hidden=on||!$("#recent li");
-  if(!on){R.hidden=true;$("#empty").hidden=true;setActive(null);live.textContent="";setHint();return}
+  if(!on){R.hidden=true;$("#empty").hidden=true;setActive(null);live.textContent="";return}
   const hits=ORIG.map(li=>[score(li,t),li]).filter(([s])=>s>=0).sort((a,b)=>b[0]-a[0]).slice(0,60);
   R.querySelector("ul").replaceChildren(...hits.map(([,li])=>clone(li)));
-  R.querySelector(".count").textContent=hits.length;R.hidden=!hits.length;
+  R.hidden=!hits.length;
   $("#empty").hidden=!!hits.length;$("#eq").textContent="“"+q.value.trim()+"”";
   setActive(document.activeElement===q?items()[0]:null);
-  live.textContent=hits.length+(hits.length===1?" result":" results");setHint();
+  live.textContent=hits.length+(hits.length===1?" result":" results");
 }
 q.addEventListener("input",search);
 q.addEventListener("focus",()=>q.value&&setActive(items()[0]));
@@ -395,7 +378,6 @@ document.addEventListener("keydown",e=>{
   const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
   if((e.key==="k"&&(e.metaKey||e.ctrlKey))||(e.key==="/"&&!typing)){e.preventDefault();q.focus();q.select()}
 });
-$("#clear").addEventListener("click",()=>{clear();q.focus()});
 
 // Collapsed sections remember being opened, per device.
 const opened=new Set(store.get("mh.open",[]));
@@ -443,13 +425,13 @@ function item(e: Entry): string {
     monitored ? `data-url="${esc(e.url!)}"` : "",
     e.path ? `data-path="${esc(e.path)}"` : "",
   ].join(" ");
-  const dot = monitored ? `<span class="dot checking" title="Checking…"><span class="sr-only">Checking: </span></span>` : "";
-  const lock = e.private && link ? `<span class="lock" title="Private">${LOCK}<span class="sr-only">(private)</span></span>` : "";
-  return `<li ${data}>${open}<span class="t1">${dot}<span class="name">${esc(e.name)}</span>${lock}<span class="pinmark" title="Pinned">${STAR}</span><span class="grp">${esc(e.group)}</span><span class="meta">${when(e.updated)}</span></span><span class="host">${esc(h)}</span><span class="desc">${esc(e.description)}</span>${link ? "</a>" : "</div>"}<span class="acts">${acts}</span></li>`;
+  // Hidden unless the status check finds it down or slow.
+  const dot = monitored ? `<span class="dot"><span class="sr-only"></span></span>` : "";
+  return `<li ${data}>${open}<span class="t1">${dot}<span class="name">${esc(e.name)}</span><span class="grp">${esc(e.group)}</span><span class="meta">${when(e.updated)}</span></span><span class="host">${esc(h)}</span><span class="desc">${esc(e.description)}</span>${link ? "</a>" : "</div>"}<span class="acts">${acts}</span></li>`;
 }
 
-const shell = (id: string, title: string, kind: string, note = "") =>
-  `<section class="sec" id="${id}" aria-labelledby="${id}-h" hidden><div class="sec-h"><h2 id="${id}-h">${title}</h2><span class="count">0</span>${note ? `<span class="note">${note}</span>` : ""}</div><ul class="items ${kind}"></ul></section>`;
+const shell = (id: string, title: string, kind: string) =>
+  `<section class="sec" id="${id}" aria-labelledby="${id}-h" hidden><div class="sec-h"><h2 id="${id}-h">${title}</h2></div><ul class="items ${kind}"></ul></section>`;
 
 export function renderDash(entries: Entry[], session: Session, nonce: string, pins: string[]): string {
   const groups = [...new Set(entries.map((e) => e.group))].sort((a, b) => rank(a) - rank(b));
@@ -457,7 +439,8 @@ export function renderDash(entries: Entry[], session: Session, nonce: string, pi
     .map((g) => {
       const list = entries.filter((e) => e.group === g);
       const id = `sec-${slug(g)}`;
-      const head = `<h2 id="${id}-h">${esc(g)}</h2><span class="count">${list.length}</span>`;
+      // Counts only where they say something: on collapsed sections.
+      const head = `<h2 id="${id}-h">${esc(g)}</h2>${COLLAPSED.has(g) ? `<span class="count">${list.length}</span>` : ""}`;
       const ul = `<ul class="items ${TILE_GROUPS.has(g) ? "tiles" : "compact"}">${list.map(item).join("")}</ul>`;
       return COLLAPSED.has(g)
         ? `<details class="sec" id="${id}" data-g="${esc(g)}"><summary class="sec-h">${CHEVRON}${head}</summary>${ul}</details>`
@@ -482,16 +465,15 @@ export function renderDash(entries: Entry[], session: Session, nonce: string, pi
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <label class="sr-only" for="q">Search</label>
       <input id="q" type="search" placeholder="Search ${entries.length} things…" autocomplete="off" spellcheck="false" aria-controls="main" autofocus>
-      <span class="kbds" aria-hidden="true"><kbd id="k1">⌘</kbd><kbd id="k2">K</kbd></span>
     </div>
     <p id="alert" role="status" hidden></p>
   </div>
   <p class="sr-only" id="live" aria-live="polite"></p>
-  ${shell("results", "Results", "results")}
+  <section class="sec" id="results" aria-label="Search results" hidden><ul class="items results"></ul></section>
   ${shell("pinned", "Pinned", "tiles")}
-  ${shell("recent", "Recent", "tiles", "on this device")}
+  ${shell("recent", "Recent", "tiles")}
   <div id="groups">${sections}</div>
-  <div class="empty" id="empty" hidden><p>Nothing matches <b id="eq"></b></p><button class="btn btn-secondary" type="button" id="clear">Clear search</button></div>
+  <div class="empty" id="empty" hidden><p>Nothing matches <b id="eq"></b>.</p></div>
 </main>
 <script nonce="${nonce}">const PINS=${pinsJson};${DASH_JS}</script>`,
   });
