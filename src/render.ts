@@ -74,9 +74,6 @@ svg{flex:none}
 `;
 
 const ARROW = `<svg class="arrow" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const GITHUB = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.71 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>`;
-const LINKEDIN = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M13.6 0H2.4A2.4 2.4 0 0 0 0 2.4v11.2A2.4 2.4 0 0 0 2.4 16h11.2a2.4 2.4 0 0 0 2.4-2.4V2.4A2.4 2.4 0 0 0 13.6 0ZM4.9 13.4H2.6V6h2.3v7.4ZM3.7 5a1.3 1.3 0 1 1 0-2.7 1.3 1.3 0 0 1 0 2.7Zm9.7 8.4h-2.3V9.8c0-.9 0-2-1.2-2s-1.4 1-1.4 2v3.7H6.2V6h2.2v1h.1c.3-.6 1.1-1.2 2.2-1.2 2.4 0 2.8 1.5 2.8 3.5v4.1Z"/></svg>`;
-const MAIL = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.75 3.75h12.5v8.5H1.75zM2 4l6 5 6-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 const LOCK = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 
 const COPY = `<svg class="arrow" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.25" y="5.25" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.75 3.25v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
@@ -106,58 +103,64 @@ ${o.body}
 
 // ---------------------------------------------------------------- public homepage
 
+// A personal page, not a landing page: one reading column, a label rail on wide screens, plain
+// links. Geist and the Vercel neutrals from TOKENS; --faint is darkened from gray-700 so small
+// text passes AA.
 const HOME_CSS = `
-.wrap{max-width:960px}
-.nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--page) 80%,transparent);backdrop-filter:saturate(180%) blur(8px);-webkit-backdrop-filter:saturate(180%) blur(8px)}
-.nav .wrap{height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:500;letter-spacing:-.01em}
-.nav-r{display:flex;align-items:center;gap:4px}
-.frame{position:relative}
-.hero{position:relative;margin-top:24px;border:1px solid var(--border);padding:112px 64px 96px;overflow:hidden;isolation:isolate}
-.hero::before{content:"";position:absolute;inset:0;z-index:-1;background-image:linear-gradient(to right,var(--grid-line) 1px,transparent 1px),linear-gradient(to bottom,var(--grid-line) 1px,transparent 1px);background-size:64px 64px;background-position:-1px -1px;-webkit-mask-image:radial-gradient(ellipse 80% 90% at 70% 0%,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse 80% 90% at 70% 0%,#000 30%,transparent 75%)}
-.plus{position:absolute;width:21px;height:21px;color:var(--gray-600)}
-.plus.tl{top:-11px;left:-11px}.plus.tr{top:-11px;right:-11px}.plus.bl{bottom:-11px;left:-11px}.plus.br{bottom:-11px;right:-11px}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;height:24px;padding:0 10px 0 8px;border-radius:var(--r-full);box-shadow:var(--shadow-sm);background:var(--bg-100);font:400 12px/16px var(--mono);color:var(--fg-muted)}
-.eyebrow i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 20%,transparent)}
-h1{margin:24px 0 0;font-size:56px;line-height:56px;font-weight:600;letter-spacing:-3.36px}
-.lede{margin:20px 0 0;max-width:38ch;font-size:18px;line-height:28px;color:var(--fg-muted)}
-.lede strong{color:var(--fg);font-weight:500}
-.cta{display:flex;gap:12px;margin-top:36px}
-section.block{margin-top:96px}
-.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:20px}
-h2{margin:0;font-size:14px;line-height:20px;font-weight:600;letter-spacing:-.28px}
-.sec-h a{font-size:13px;color:var(--fg-muted);display:inline-flex;align-items:center;gap:4px;border-radius:4px;transition:color var(--t-fast)}
-.sec-h a:hover{color:var(--fg)}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);border-top:1px solid var(--border);border-left:1px solid var(--border);list-style:none;margin:0;padding:0}
-.grid li{border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex}
-.card{position:relative;display:flex;flex-direction:column;gap:8px;width:100%;padding:28px 28px 32px;transition:background var(--t-fast) var(--ease)}
-.card:hover{background:var(--hover)}
-.card:focus-visible{border-radius:0;box-shadow:inset 0 0 0 2px var(--ring-c)}
-.stack{font:400 12px/16px var(--mono);color:var(--fg-muted);letter-spacing:.01em}
-.card h3{margin:8px 0 0;font-size:16px;line-height:24px;font-weight:600;letter-spacing:-.32px}
-.card p{margin:0;color:var(--fg-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card .arrow{position:absolute;top:26px;right:24px;color:var(--fg-faint);transition:transform var(--t) var(--swift),color var(--t-fast) var(--ease)}
-.card:hover .arrow{transform:translate(2px,-2px);color:var(--fg)}
-.links{display:flex;flex-wrap:wrap;gap:4px 8px;list-style:none;margin:0 0 0 -12px;padding:0}
-.links .btn{height:36px}
-footer{margin-top:96px;border-top:1px solid var(--border)}
-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-top:24px;padding-bottom:32px;font-size:13px;line-height:18px;color:var(--fg-muted)}
-@media (max-width:767px){h1{font-size:40px;line-height:44px;letter-spacing:-2.4px}.hero{padding:72px 32px 56px}}
-@media (max-width:639px){.hero{padding:56px 24px 40px;margin-top:8px}.grid{grid-template-columns:1fr}.card{padding:24px 20px 28px}.card p{-webkit-line-clamp:unset;display:block}.card .arrow{top:22px;right:18px}section.block{margin-top:64px}footer{margin-top:80px}}
-@media (max-width:479px){.hide-sm{display:none}.cta .btn{flex:1}.lede{font-size:16px;line-height:24px}}
-@media (max-width:399px){.brand-name{display:none}}
+:root{--faint:#666}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--page:#0a0a0a;--faint:#8f8f8f}}
+body{font:400 15px/1.6 var(--sans);-webkit-font-smoothing:auto;-moz-osx-font-smoothing:auto;text-rendering:optimizeLegibility}
+@media (prefers-color-scheme:dark){body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}}
+::selection{background:var(--fg);color:var(--page)}
+a{text-decoration-line:underline;text-decoration-color:var(--alpha-500);text-decoration-thickness:1px;text-underline-offset:.22em;transition:text-decoration-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+a:hover{text-decoration-color:currentColor}
+:focus-visible{box-shadow:none;outline:2px solid var(--fg);outline-offset:3px;border-radius:2px}
+.page{max-width:820px;margin:0 auto;padding:0 24px}
+.top{display:flex;justify-content:flex-end;padding-top:20px}
+.login{height:30px;padding:0 12px;font-size:13px;text-decoration:none;color:var(--fg-muted);box-shadow:0 0 0 1px var(--border)}
+.login:hover{color:var(--fg);box-shadow:0 0 0 1px var(--border-hover)}
+.login:focus-visible{outline-offset:2px;border-radius:var(--r-sm);box-shadow:0 0 0 1px var(--border)}
+header.intro{padding:clamp(40px,10vw,104px) 0 0}
+h1{margin:0;font-size:clamp(28px,4.2vw,34px);line-height:1.1;font-weight:600;letter-spacing:-.025em}
+.meta{margin:10px 0 0;font:400 13px/20px var(--mono);color:var(--faint);letter-spacing:-.01em}
+.lede{margin:28px 0 0;max-width:32em;font-size:clamp(18px,2.2vw,20px);line-height:1.5;letter-spacing:-.011em;text-wrap:pretty}
+.contact{display:flex;flex-wrap:wrap;gap:4px 20px;margin:20px 0 0;padding:0;list-style:none;color:var(--fg-muted)}
+.contact a:hover{color:var(--fg)}
+h2{margin:0 0 12px;font-size:13px;line-height:20px;font-weight:500;color:var(--faint)}
+.all{display:inline-block;margin-top:16px;font-size:13px;color:var(--fg-muted)}
+.all:hover{color:var(--fg)}
+.work{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--border)}
+.work li{border-top:1px solid var(--border)}
+.work a{display:grid;grid-template-columns:1fr auto;gap:2px 24px;margin:0 -12px;padding:16px 12px 18px;border-radius:4px;text-decoration:none}
+.work a:focus-visible{outline-offset:-2px}
+.work h3{margin:0;font-size:15px;line-height:24px;font-weight:500;letter-spacing:-.01em}
+.work h3 span{text-decoration:underline;text-decoration-color:transparent;text-decoration-thickness:1px;text-underline-offset:.22em;transition:text-decoration-color var(--t-fast) var(--ease)}
+.work a:hover h3 span{text-decoration-color:currentColor}
+.work p{grid-column:1;margin:0;color:var(--fg-muted);max-width:52ch;text-wrap:pretty}
+.stack{grid-column:2;grid-row:1;align-self:baseline;font:400 12px/24px var(--mono);color:var(--faint);white-space:nowrap}
+footer{max-width:820px;margin:clamp(80px,12vw,128px) auto 0;padding:0 24px}
+footer>div{padding:20px 0 40px;border-top:1px solid var(--border);font-size:13px;line-height:20px;color:var(--faint)}
+@media (min-width:760px){
+  .page{display:grid;grid-template-columns:148px minmax(0,1fr);column-gap:40px}
+  .page>*{grid-column:2}
+  .page>h2{grid-column:1;margin-bottom:0;padding-top:18px;align-self:start}
+  .sec-start{margin-top:104px}
+}
+@media (max-width:759px){h2.sec-start{margin-top:clamp(64px,10vw,104px)}}
+@media (max-width:479px){
+  .page,footer{padding:0 20px}
+  .work a{grid-template-columns:1fr;padding-top:14px;padding-bottom:16px}
+  .stack{grid-column:1;grid-row:auto;order:3;line-height:20px;margin-top:6px}
+}
 `;
 
-const PLUS = (pos: string) => `<svg class="plus ${pos}" viewBox="0 0 21 21" aria-hidden="true"><path d="M10.5 0v21M0 10.5h21" stroke="currentColor"/></svg>`;
-
 export function renderHome(featured: Entry[], session: { email: string } | null): string {
-  const cards = featured
+  const rows = featured
     .map(
-      (e) => `<li><a class="card" href="${esc(href(e) ?? "#")}">
+      (e) => `<li><a href="${esc(href(e) ?? "#")}">
+        <h3><span>${esc(e.name)}</span></h3>
         <span class="stack">${esc((e.tags ?? []).join(" · "))}</span>
-        <h3>${esc(e.name)}</h3>
         <p>${esc(e.description)}</p>
-        ${ARROW}
       </a></li>`,
     )
     .join("");
@@ -165,43 +168,28 @@ export function renderHome(featured: Entry[], session: { email: string } | null)
   return page({
     title: "Mack Haymond",
     pageBg: "var(--bg-100)",
-    head: `<meta name="description" content="Mack Haymond. CS and Math/Econ at UCLA. Developer tools, Cloudflare Workers apps, macOS utilities, and models for markets.">`,
+    head: `<meta name="description" content="Mack Haymond studies CS and Math/Econ at UCLA and works part-time in the middle office at Hartree Partners. This page lists things he's built.">`,
     css: HOME_CSS,
     body: `<a class="skip" href="#main">Skip to content</a>
-<header class="nav"><div class="wrap">
-  <a class="brand" href="/?public" aria-label="Mack Haymond, home"><span class="mark" aria-hidden="true">MH</span><span class="brand-name">Mack Haymond</span></a>
-  <nav class="nav-r" aria-label="Primary">
-    <a class="btn btn-ghost hide-sm" href="https://github.com/mackhaymond">GitHub</a>
-    ${session ? `<a class="btn btn-secondary" href="/dash">Dashboard</a>` : `<a class="btn btn-secondary" href="/dash">Log in</a>`}
-  </nav>
-</div></header>
-<main id="main" class="wrap">
-  <div class="frame">
-    <section class="hero" aria-labelledby="name">
-      <span class="eyebrow"><i aria-hidden="true"></i>UCLA · CS + Math/Econ</span>
-      <h1 id="name">Mack Haymond</h1>
-      <p class="lede">I build <strong>developer tools</strong>, Cloudflare Workers apps, macOS utilities, and models for markets.</p>
-      <div class="cta">
-        <a class="btn btn-primary btn-lg" href="https://github.com/mackhaymond">${GITHUB}GitHub</a>
-        <a class="btn btn-secondary btn-lg" href="mailto:${EMAIL}">Email</a>
-      </div>
-    </section>
-    ${PLUS("tl")}${PLUS("tr")}${PLUS("bl")}${PLUS("br")}
-  </div>
-  <section class="block" aria-labelledby="work">
-    <div class="sec-h"><h2 id="work">Selected work</h2><a href="https://github.com/mackhaymond?tab=repositories">All repositories <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
-    <ul class="grid">${cards}</ul>
-  </section>
-  <section class="block" aria-labelledby="elsewhere">
-    <div class="sec-h"><h2 id="elsewhere">Elsewhere</h2></div>
-    <ul class="links">
-      <li><a class="btn btn-ghost" href="https://github.com/mackhaymond">${GITHUB}GitHub</a></li>
-      <li><a class="btn btn-ghost" href="https://www.linkedin.com/in/mackhaymond">${LINKEDIN}LinkedIn</a></li>
-      <li><a class="btn btn-ghost" href="mailto:${EMAIL}">${MAIL}${EMAIL}</a></li>
+<main id="main" class="page">
+  <nav class="top" aria-label="Account"><a class="btn login" href="/dash">${session ? "Dashboard" : "Log in"}</a></nav>
+  <header class="intro">
+    <h1>Mack Haymond</h1>
+    <p class="meta">UCLA ’29 · CS + Math/Econ</p>
+    <p class="lede">I work in the middle office at Hartree Partners, mostly on P&amp;L attribution. I also write software, usually tools I wanted for myself.</p>
+    <ul class="contact">
+      <li><a href="https://github.com/mackhaymond">GitHub</a></li>
+      <li><a href="https://www.linkedin.com/in/mackhaymond">LinkedIn</a></li>
+      <li><a href="mailto:${EMAIL}">${EMAIL}</a></li>
     </ul>
-  </section>
+  </header>
+  <h2 id="work" class="sec-start">Projects</h2>
+  <div class="sec-start">
+    <ul class="work" aria-labelledby="work">${rows}</ul>
+    <a class="all" href="https://github.com/mackhaymond?tab=repositories">More on GitHub</a>
+  </div>
 </main>
-<footer><div class="wrap"><span>© ${new Date().getFullYear()} Mack Haymond</span><span class="mono">Served from a Cloudflare Worker</span></div></footer>`,
+<footer><div>© ${new Date().getFullYear()} Mack Haymond</div></footer>`,
   });
 }
 
