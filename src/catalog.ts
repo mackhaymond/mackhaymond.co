@@ -16,8 +16,14 @@ export interface Entry {
   monitor?: boolean;
   /** Show on the public homepage (public entries only). */
   featured?: boolean;
-  /** Set by the Worker for entries loaded from KV. */
+  /** Private repo / private tool. KV entries default to true. */
   private?: boolean;
+  /** Local checkout, e.g. "~/code/projects/vlt". Rows with only a path copy it on click. */
+  path?: string;
+  /** ISO date of last activity (repos). */
+  updated?: string;
+  /** "sync" for entries owned by scripts/sync-repos.mjs. */
+  source?: string;
 }
 
 export const PUBLIC_CATALOG: Entry[] = [

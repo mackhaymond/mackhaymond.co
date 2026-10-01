@@ -6,12 +6,22 @@ import type { Entry } from "./catalog";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-/** "link.mackhaymond.co/admin" or "github.com/mackhaymond/Awake" */
+/** "link.mackhaymond.co/admin", "github.com/mackhaymond/Awake", or "~/code/projects/corne" */
 function host(e: Entry): string {
+  if (!e.url && !e.repo) return e.path ?? "";
   const u = new URL(e.url ?? e.repo!);
   return (u.hostname + u.pathname).replace(/\/$/, "");
 }
-const href = (e: Entry) => e.url ?? e.repo ?? "#";
+const href = (e: Entry) => e.url ?? e.repo;
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const when = (iso?: string) => (iso ? `${MONTHS[+iso.slice(5, 7) - 1]} ${iso.slice(0, 4)}` : "");
+
+// Dashboard section order; unlisted groups go after "Admin". Collapsed ones open while searching.
+const GROUP_ORDER = ["Tools", "Sites", "Projects", "Repos", "Local", "Admin"];
+const COLLAPSED = new Set(["Forks", "Clones", "Scratch", "Coursework", "Archive"]);
+const TAIL = ["Forks", "Clones", "Scratch", "Coursework", "Archive"];
+const rank = (g: string) => (GROUP_ORDER.includes(g) ? GROUP_ORDER.indexOf(g) : TAIL.includes(g) ? 100 + TAIL.indexOf(g) : 50);
 
 // ---------------------------------------------------------------- shared
 
@@ -68,6 +78,9 @@ const GITHUB = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="tru
 const LINKEDIN = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M13.6 0H2.4A2.4 2.4 0 0 0 0 2.4v11.2A2.4 2.4 0 0 0 2.4 16h11.2a2.4 2.4 0 0 0 2.4-2.4V2.4A2.4 2.4 0 0 0 13.6 0ZM4.9 13.4H2.6V6h2.3v7.4ZM3.7 5a1.3 1.3 0 1 1 0-2.7 1.3 1.3 0 0 1 0 2.7Zm9.7 8.4h-2.3V9.8c0-.9 0-2-1.2-2s-1.4 1-1.4 2v3.7H6.2V6h2.2v1h.1c.3-.6 1.1-1.2 2.2-1.2 2.4 0 2.8 1.5 2.8 3.5v4.1Z"/></svg>`;
 const MAIL = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.75 3.75h12.5v8.5H1.75zM2 4l6 5 6-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 const LOCK = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+
+const COPY = `<svg class="arrow" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.25" y="5.25" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.75 3.25v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+const CHEVRON = `<svg class="chev" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const EMAIL = "mackhaymond@ucla.edu";
 
@@ -140,7 +153,7 @@ const PLUS = (pos: string) => `<svg class="plus ${pos}" viewBox="0 0 21 21" aria
 export function renderHome(featured: Entry[], session: { email: string } | null): string {
   const cards = featured
     .map(
-      (e) => `<li><a class="card" href="${esc(href(e))}">
+      (e) => `<li><a class="card" href="${esc(href(e) ?? "#")}">
         <span class="stack">${esc((e.tags ?? []).join(" · "))}</span>
         <h3>${esc(e.name)}</h3>
         <p>${esc(e.description)}</p>
@@ -238,6 +251,15 @@ h2{margin:0;font-size:14px;line-height:20px;font-weight:600;letter-spacing:-.28p
 .badge.degraded{background:var(--amber-bg);color:var(--amber-fg)}
 .badge.down{background:var(--red-bg);color:var(--red-fg)}
 .lock{display:inline-block;vertical-align:-1px;margin-left:6px;color:var(--fg-muted)}
+.when{font:400 12px/16px var(--mono);color:var(--fg-faint);white-space:nowrap}
+div.row{cursor:pointer}
+div.row.copied .when::after{content:" · copied";color:var(--green)}
+summary.g-h{cursor:pointer;list-style:none;width:max-content;border-radius:var(--r-sm);padding-right:6px}
+summary.g-h::-webkit-details-marker{display:none}
+summary.g-h:hover h2{color:var(--fg-muted)}
+.chev{color:var(--fg-muted);transition:transform var(--t-fast) var(--ease)}
+details[open]>summary .chev{transform:rotate(90deg)}
+details.group:not([open]){margin-bottom:16px}
 .row .arrow{color:var(--fg-faint);transition:transform var(--t) var(--swift),color var(--t-fast)}
 .row:hover .arrow{transform:translate(2px,-2px);color:var(--fg)}
 .enter{display:none}
@@ -274,7 +296,7 @@ const $=s=>document.querySelector(s),q=$("#q"),G=$("#groups"),live=$("#live");
 const mac=/Mac|iP(hone|ad)/.test(navigator.platform||navigator.userAgent);
 const setHint=()=>{const k1=$("#k1"),k2=$("#k2");if(q.value){k1.textContent="esc";k2.hidden=true}else{k1.textContent=mac?"⌘":"Ctrl";k2.hidden=false}};
 setHint();
-const rows=()=>[...G.querySelectorAll("li:not([hidden]) .row")];
+const rows=()=>[...G.querySelectorAll("li:not([hidden]) .row")].filter(r=>r.offsetParent);
 let active=null;
 const setActive=r=>{active?.classList.remove("active");active=r;r?.classList.add("active")};
 function filter(){
@@ -282,6 +304,7 @@ function filter(){
   G.querySelectorAll(".group").forEach(sec=>{
     let c=0;sec.querySelectorAll("li").forEach(li=>{const ok=t.every(w=>li.dataset.k.includes(w));li.hidden=!ok;c+=ok});
     sec.hidden=!c;sec.querySelector(".count").textContent=c;total+=c;
+    if(sec.hasAttribute("data-collapsed"))sec.open=t.length>0;
   });
   $("#empty").hidden=!!total;$("#eq").textContent="\\u201c"+q.value.trim()+"\\u201d";
   setActive(t.length&&document.activeElement===q?rows()[0]:null);
@@ -293,7 +316,7 @@ q.addEventListener("focus",()=>q.value&&setActive(rows()[0]));
 q.addEventListener("blur",()=>setActive(null));
 q.addEventListener("keydown",e=>{
   if(e.key==="ArrowDown"){const r=rows()[0];if(r){e.preventDefault();r.focus()}}
-  else if(e.key==="Enter"){const r=active||rows()[0];if(r){e.preventDefault();(e.metaKey||e.ctrlKey)?window.open(r.href,"_blank","noopener"):r.click()}}
+  else if(e.key==="Enter"){const r=active||rows()[0];if(r){e.preventDefault();(e.metaKey||e.ctrlKey)&&r.href?window.open(r.href,"_blank","noopener"):r.click()}}
   else if(e.key==="Escape"){if(q.value){q.value="";filter()}else q.blur()}
 });
 G.addEventListener("keydown",e=>{
@@ -301,6 +324,7 @@ G.addEventListener("keydown",e=>{
   if(e.key==="ArrowDown"){e.preventDefault();rs[Math.min(i+1,rs.length-1)].focus()}
   else if(e.key==="ArrowUp"){e.preventDefault();i?rs[i-1].focus():q.focus()}
   else if(e.key==="Escape"){q.focus()}
+  else if(e.key==="Enter"&&rs[i].dataset.copy!==undefined){e.preventDefault();rs[i].click()}
   else if(e.key.length===1&&!e.metaKey&&!e.ctrlKey&&e.key!==" "){q.focus()}
 });
 document.addEventListener("keydown",e=>{
@@ -308,6 +332,10 @@ document.addEventListener("keydown",e=>{
   if((e.key==="k"&&(e.metaKey||e.ctrlKey))||(e.key==="/"&&!typing)){e.preventDefault();q.focus();q.select()}
 });
 $("#clear").addEventListener("click",()=>{q.value="";filter();q.focus()});
+G.addEventListener("click",e=>{
+  const r=e.target.closest("[data-copy]");if(!r)return;
+  navigator.clipboard.writeText(r.dataset.copy).then(()=>{r.classList.add("copied");live.textContent="Copied "+r.dataset.copy;setTimeout(()=>r.classList.remove("copied"),1500)});
+});
 
 const LBL={up:"Operational",degraded:"Degraded",down:"Down"};
 fetch("/api/status").then(r=>r.json()).then(st=>{
@@ -328,19 +356,29 @@ fetch("/api/status").then(r=>r.json()).then(st=>{
 
 function row(e: Entry): string {
   const monitored = !!e.url && e.monitor !== false;
-  const key = [e.name, host(e), e.description, e.group, ...(e.tags ?? []), e.private ? "private" : "public"].join(" ").toLowerCase();
-  return `<li data-k="${esc(key)}"${monitored ? ` data-url="${esc(e.url!)}"` : ""}><a class="row" href="${esc(href(e))}">
+  const link = href(e);
+  const key = [e.name, host(e), e.path, e.description, e.group, ...(e.tags ?? []), e.private ? "private" : "public"].join(" ").toLowerCase();
+  // Local-only folders/repos have nothing to link to; clicking copies the path.
+  const open = link
+    ? `<a class="row" href="${esc(link)}"${e.path ? ` title="${esc(e.path)}"` : ""}>`
+    : `<div class="row" tabindex="0" role="button" data-copy="${esc(e.path ?? "")}" title="Copy path">`;
+  const icon = link ? ARROW : COPY;
+  return `<li data-k="${esc(key)}"${monitored ? ` data-url="${esc(e.url!)}"` : ""}>${open}
 <span class="dot${monitored ? " checking" : ""}" title="${monitored ? "Checking…" : "Not monitored"}"><span class="sr-only">${monitored ? "Checking" : "Not monitored"}: </span></span>
-<span class="id"><span class="name">${esc(e.name)}${e.private ? `<span class="lock" title="Private">${LOCK}<span class="sr-only"> (private)</span></span>` : ""}</span><span class="host">${esc(host(e))}</span></span>
-<span class="desc">${esc(e.description)}</span><span class="badges"></span>${ARROW}<kbd class="enter" aria-hidden="true">↵</kbd></a></li>`;
+<span class="id"><span class="name">${esc(e.name)}${e.private && link ? `<span class="lock" title="Private">${LOCK}<span class="sr-only"> (private)</span></span>` : ""}</span><span class="host">${esc(host(e))}</span></span>
+<span class="desc">${esc(e.description)}</span><span class="badges">${e.updated ? `<span class="when">${when(e.updated)}</span>` : ""}</span>${icon}<kbd class="enter" aria-hidden="true">↵</kbd>${link ? "</a>" : "</div>"}</li>`;
 }
 
 export function renderDash(entries: Entry[], session: Session, nonce: string): string {
-  const groups = [...new Set(entries.map((e) => e.group))];
+  const groups = [...new Set(entries.map((e) => e.group))].sort((a, b) => rank(a) - rank(b));
   const sections = groups
     .map((g, i) => {
       const items = entries.filter((e) => e.group === g);
-      return `<section class="group" aria-labelledby="g${i}"><div class="g-h"><h2 id="g${i}">${esc(g)}</h2><span class="count">${items.length}</span></div><ul class="list">${items.map(row).join("")}</ul></section>`;
+      const head = `<h2 id="g${i}">${esc(g)}</h2><span class="count">${items.length}</span>`;
+      const list = `<ul class="list">${items.map(row).join("")}</ul>`;
+      return COLLAPSED.has(g)
+        ? `<details class="group" data-collapsed aria-labelledby="g${i}"><summary class="g-h">${CHEVRON}${head}</summary>${list}</details>`
+        : `<section class="group" aria-labelledby="g${i}"><div class="g-h">${head}</div>${list}</section>`;
     })
     .join("");
 

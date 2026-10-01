@@ -31,7 +31,9 @@ function redirect(location: string, status = 302): Response {
 
 async function privateCatalog(env: Env): Promise<Entry[]> {
   const list = (await env.CATALOG.get<Entry[]>("catalog", "json")) ?? [];
-  return list.map((e) => ({ ...e, private: true }));
+  // Skip synced repo entries that the public catalog already shows.
+  const shown = new Set(PUBLIC_CATALOG.map((e) => e.repo?.toLowerCase()).filter(Boolean));
+  return list.filter((e) => !e.repo || !shown.has(e.repo.toLowerCase())).map((e) => ({ private: true, ...e }));
 }
 
 // Probe every catalog URL for the status dots. Any HTTP response (including an Access redirect)

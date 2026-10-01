@@ -27,6 +27,13 @@ deploy or retire something with a URL.
   Groups in use: `Tools` (apps I log into), `Sites` (private/personal sites),
   `Admin` (third-party dashboards, `"monitor": false`).
 - **Retired**: remove the entry the same way.
+- **New repo or project folder** (GitHub or local): `npm run catalog:sync`.
+  `scripts/sync-repos.mjs` scans GitHub (personal + orgs) and every git repo
+  under `~` plus non-repo folders in `~/code` and `~/code/projects`, groups
+  them (Repos, Local, Forks, Clones, Scratch, Coursework, Archive), and
+  rewrites only `"source": "sync"` entries. To fix a synced entry's name,
+  description, or group, add a hand-written entry with the same `path` or
+  `repo`; it wins over the synced one.
 
 The `Entry` type in `src/catalog.ts` is the schema for both. Every entry with
 a `url` gets a status dot on `/dash` unless `"monitor": false`.

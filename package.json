@@ -7,7 +7,8 @@
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "catalog:pull": "wrangler kv key get catalog --binding CATALOG --remote > catalog.private.json",
-    "catalog:push": "wrangler kv key put catalog --binding CATALOG --remote --path catalog.private.json"
+    "catalog:push": "wrangler kv key put catalog --binding CATALOG --remote --path catalog.private.json",
+    "catalog:sync": "npm run -s catalog:pull && node scripts/sync-repos.mjs && npm run -s catalog:push"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260930.2",
