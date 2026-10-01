@@ -23,6 +23,9 @@ function html(body: string, { status = 200, private: priv = false, nonce = "" } 
   });
 }
 
+// Pinned entry ids (see entryId in render.ts), shared across devices.
+const getPins = async (env: Env) => (await env.CATALOG.get<string[]>("pins", "json")) ?? [];
+
 const catalog = async (env: Env) => [...(await privateCatalog(env)), ...PUBLIC_CATALOG];
 
 function redirect(location: string, status = 302): Response {
@@ -64,7 +67,8 @@ export default {
       url.hostname = "mackhaymond.co";
       return redirect(url.toString(), 301);
     }
-    if (req.method !== "GET" && req.method !== "HEAD") return new Response("Method not allowed", { status: 405 });
+    const write = req.method === "POST" && url.pathname === "/api/pins";
+    if (req.method !== "GET" && req.method !== "HEAD" && !write) return new Response("Method not allowed", { status: 405 });
 
     const session = await getSession(req, env);
 
@@ -88,7 +92,19 @@ export default {
         const next = url.searchParams.get("next");
         if (next?.startsWith("/") && !next.startsWith("//")) return redirect(next);
         const nonce = crypto.randomUUID().replace(/-/g, "");
-        return html(renderDash(await catalog(env), session, nonce), { private: true, nonce });
+        const [entries, pins] = await Promise.all([catalog(env), getPins(env)]);
+        return html(renderDash(entries, session, nonce, pins), { private: true, nonce });
+      }
+      case "/api/pins": {
+        if (!write) return new Response("Method not allowed", { status: 405 });
+        // Access already gates /api/*; also refuse cross-site form posts.
+        if (req.headers.get("origin") !== url.origin) return new Response("Forbidden", { status: 403 });
+        const { id, pinned } = await req.json<{ id?: unknown; pinned?: unknown }>().catch(() => ({ id: undefined, pinned: undefined }));
+        if (typeof id !== "string" || id.length > 500 || typeof pinned !== "boolean") return new Response("Bad request", { status: 400 });
+        const pins = (await getPins(env)).filter((p) => p !== id);
+        if (pinned) pins.push(id);
+        await env.CATALOG.put("pins", JSON.stringify(pins));
+        return Response.json({ pins }, { headers: { "cache-control": "no-store" } });
       }
       case "/api/status": {
         const body = JSON.stringify(await status(await catalog(env)));

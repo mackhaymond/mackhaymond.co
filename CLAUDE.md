@@ -44,6 +44,9 @@ a `url` gets a status dot on `/dash` unless `"monitor": false`.
   and static assets in `public/`.
 - `src/access.ts`: verifies the Access JWT (header or `CF_Authorization`
   cookie) and checks the email against `OWNER_EMAILS`.
-- `src/render.ts`: both pages (Geist/Vercel styling, server-rendered).
+- `src/render.ts`: both pages (Geist/Vercel styling, server-rendered). On
+  `/dash`, Tools/Sites/Projects/Admin render as tiles and everything else as
+  compact columns. Pins live in KV key `pins` (array of entry ids, written by
+  `POST /api/pins`); recents and opened sections are per-device localStorage.
 - Local dev: `.dev.vars` with `DEV=1` treats every request as the owner;
   seed local KV with `npx wrangler kv key put catalog --binding CATALOG --local --path catalog.private.json`.

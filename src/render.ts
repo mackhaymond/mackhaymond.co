@@ -17,8 +17,8 @@ const href = (e: Entry) => e.url ?? e.repo;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const when = (iso?: string) => (iso ? `${MONTHS[+iso.slice(5, 7) - 1]} ${iso.slice(0, 4)}` : "");
 
-// Dashboard section order; unlisted groups go after "Admin". Collapsed ones open while searching.
-const GROUP_ORDER = ["Tools", "Sites", "Projects", "Repos", "Local", "Admin"];
+// Dashboard section order; unlisted groups go after "Local". Collapsed ones open while searching.
+const GROUP_ORDER = ["Tools", "Sites", "Projects", "Admin", "Repos", "Local"];
 const COLLAPSED = new Set(["Forks", "Clones", "Scratch", "Coursework", "Archive"]);
 const TAIL = ["Forks", "Clones", "Scratch", "Coursework", "Archive"];
 const rank = (g: string) => (GROUP_ORDER.includes(g) ? GROUP_ORDER.indexOf(g) : TAIL.includes(g) ? 100 + TAIL.indexOf(g) : 50);
@@ -73,10 +73,8 @@ svg{flex:none}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation:none!important}}
 `;
 
-const ARROW = `<svg class="arrow" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const LOCK = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 
-const COPY = `<svg class="arrow" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.25" y="5.25" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.75 3.25v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 const CHEVRON = `<svg class="chev" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const EMAIL = "mackhaymond@ucla.edu";
@@ -195,214 +193,307 @@ export function renderHome(featured: Entry[], session: { email: string } | null)
 
 // ---------------------------------------------------------------- dashboard
 
+// One item markup everywhere; the container decides how it looks: .tiles (things I launch),
+// .compact (repos and folders, dense columns), .results (search, a command-palette list).
+// Pinned / Recent / Results hold clones of the server-rendered originals in #groups.
+
+const STAR = `<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.75l1.93 3.91 4.32.63-3.13 3.05.74 4.3L8 11.61l-3.86 2.03.74-4.3L1.75 6.29l4.32-.63L8 1.75z" fill="var(--star-fill,none)" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+const REPO = `<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 4 2 8l3.5 4M10.5 4 14 8l-3.5 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const COPY_SM = `<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.25" y="5.25" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.75 3.25v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+
+const TILE_GROUPS = new Set(["Tools", "Sites", "Projects", "Admin"]);
+
+/** Stable id for pins and recents. */
+export const entryId = (e: Entry) => e.url ?? e.repo ?? e.path ?? e.name;
+const slug = (g: string) => g.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
 const DASH_CSS = `
 .wrap{max-width:1080px}
-.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg-100) 82%,transparent);backdrop-filter:saturate(180%) blur(8px);-webkit-backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--border)}
-.top .wrap{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.crumbs{display:flex;align-items:center;gap:10px;min-width:0;font-weight:500}
-.crumbs .sl{color:var(--gray-500);font-weight:300;font-size:20px}
-.crumbs .muted{color:var(--fg-muted)}
-.top-r{display:flex;align-items:center;gap:8px}
-.avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--gray-100);box-shadow:0 0 0 1px var(--border);font:500 11px/1 var(--mono);color:var(--fg-muted);text-transform:uppercase}
-.btn .short{display:none}
-.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:40px 0 20px;flex-wrap:wrap}
-h1{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-.96px}
-.summary{display:flex;flex-wrap:wrap;gap:4px 14px;margin:6px 0 0;padding:0;list-style:none;font-size:13px;line-height:18px;color:var(--fg-muted);font-feature-settings:"tnum"}
-.summary li{display:inline-flex;align-items:center;gap:6px}
-.summary .dot.down{animation:none}
-.checked{font:400 12px/16px var(--mono);color:var(--fg-muted)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:52px;font-size:13px;color:var(--fg-muted)}
+.top a{display:inline-flex;align-items:center;gap:6px;border-radius:4px;transition:color var(--t-fast)}
+.top a:hover{color:var(--fg)}
+.bar{position:sticky;top:0;z-index:9;padding:8px 0 12px;background:color-mix(in srgb,var(--page) 90%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .search{position:relative;display:flex;align-items:center}
-.search>svg{position:absolute;left:12px;color:var(--fg-muted);pointer-events:none}
-.search input{width:100%;height:40px;padding:0 64px 0 38px;border:0;border-radius:var(--r-md);background:var(--bg-100);box-shadow:var(--shadow-sm);color:var(--fg);font:400 14px/20px var(--sans);transition:box-shadow var(--t-fast) var(--ease)}
+.search>svg{position:absolute;left:14px;color:var(--fg-muted);pointer-events:none}
+.search input{width:100%;height:44px;padding:0 64px 0 42px;border:0;border-radius:10px;background:var(--bg-100);box-shadow:0 0 0 1px var(--border);color:var(--fg);font:400 15px/20px var(--sans);transition:box-shadow var(--t-fast) var(--ease)}
 .search input::placeholder{color:var(--fg-faint)}
 .search input:hover{box-shadow:0 0 0 1px var(--border-hover)}
 .search input:focus{outline:none;box-shadow:0 0 0 1px var(--alpha-600),var(--ring)}
 .search input::-webkit-search-cancel-button{display:none}
-.search .kbds{position:absolute;right:10px;display:flex;gap:4px;pointer-events:none}
+.search .kbds{position:absolute;right:12px;display:flex;gap:4px;pointer-events:none}
 kbd{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:4px;background:var(--bg-200);box-shadow:0 0 0 1px var(--border);font:500 11px/1 var(--mono);color:var(--fg-muted)}
-.groups{padding:24px 0 8px}
-.group{margin-bottom:32px}
-.g-h{display:flex;align-items:center;gap:8px;margin:0 0 10px 2px}
-h2{margin:0;font-size:14px;line-height:20px;font-weight:600;letter-spacing:-.28px}
-.count{min-width:20px;height:18px;padding:0 6px;border-radius:var(--r-full);background:var(--gray-100);font:500 11px/18px var(--mono);color:var(--fg-muted);text-align:center}
-.list{list-style:none;margin:0;padding:0;background:var(--bg-100);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);overflow:hidden}
-.list li+li{border-top:1px solid var(--border)}
-.row{display:grid;grid-template-columns:8px minmax(0,230px) minmax(0,1fr) auto 16px;align-items:center;column-gap:16px;min-height:52px;padding:8px 16px;transition:background var(--t-fast) var(--ease)}
-.row:hover,.row.active{background:var(--hover)}
-.row:focus-visible{border-radius:0;box-shadow:inset 0 0 0 2px var(--ring-c)}
-.id{display:flex;flex-direction:column;min-width:0}
-.name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.host{font:400 12px/16px var(--mono);color:var(--fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.desc{font-size:13px;line-height:18px;color:var(--fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.badges{display:flex;gap:6px}
-.badge{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:var(--r-full);font-size:12px;line-height:16px;font-weight:500}
+#alert{display:flex;flex-wrap:wrap;gap:4px 14px;margin:10px 2px 0;font-size:13px;color:var(--fg-muted)}
+#alert span{display:inline-flex;align-items:center;gap:6px}
+.sec{margin-top:28px;scroll-margin-top:80px}
+.sec-h{display:flex;align-items:baseline;gap:8px;margin:0 0 10px 2px}
+h2{margin:0;font-size:13px;line-height:20px;font-weight:500;color:var(--fg-muted)}
+.count{font:400 12px/20px var(--mono);color:var(--fg-faint)}
+.note{font-size:12px;color:var(--fg-faint)}
+summary.sec-h{cursor:pointer;list-style:none;width:max-content;border-radius:var(--r-sm);padding-right:6px}
+summary.sec-h::-webkit-details-marker{display:none}
+summary.sec-h:hover h2{color:var(--fg)}
+.chev{align-self:center;color:var(--fg-faint);transition:transform var(--t-fast) var(--ease)}
+details[open]>summary .chev{transform:rotate(90deg)}
+details.sec:not([open]){margin-top:14px}
+details.sec:not([open])+details.sec:not([open]){margin-top:6px}
+
+.items{list-style:none;margin:0;padding:0}
+.items li{position:relative}
+.it{display:block;color:inherit;border-radius:8px;transition:background var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+div.it{cursor:pointer}
+.it:focus-visible{outline:none;box-shadow:var(--ring)}
+.t1{display:flex;align-items:center;gap:8px;min-width:0}
+.name{min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.host{display:block;font:400 12px/16px var(--mono);color:var(--fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.desc{display:block;font-size:13px;line-height:18px;color:var(--fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{margin-left:auto;padding-left:8px;flex:none;font:400 11px/16px var(--mono);color:var(--fg-faint);white-space:nowrap}
+.grp{display:none}
+.lock,.pinmark{flex:none;display:inline-flex;color:var(--fg-faint)}
+.pinmark{display:none;--star-fill:currentColor}
+li.pinned .pinmark{display:inline-flex}
+li.copied .meta::before{content:"copied ";color:var(--green)}
+.badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:var(--r-full);font:500 11px/16px var(--sans)}
 .badge.degraded{background:var(--amber-bg);color:var(--amber-fg)}
 .badge.down{background:var(--red-bg);color:var(--red-fg)}
-.lock{display:inline-block;vertical-align:-1px;margin-left:6px;color:var(--fg-muted)}
-.when{font:400 12px/16px var(--mono);color:var(--fg-faint);white-space:nowrap}
-div.row{cursor:pointer}
-div.row.copied .when::after{content:" · copied";color:var(--green)}
-summary.g-h{cursor:pointer;list-style:none;width:max-content;border-radius:var(--r-sm);padding-right:6px}
-summary.g-h::-webkit-details-marker{display:none}
-summary.g-h:hover h2{color:var(--fg-muted)}
-.chev{color:var(--fg-muted);transition:transform var(--t-fast) var(--ease)}
-details[open]>summary .chev{transform:rotate(90deg)}
-details.group:not([open]){margin-bottom:16px}
-.row .arrow{color:var(--fg-faint);transition:transform var(--t) var(--swift),color var(--t-fast)}
-.row:hover .arrow{transform:translate(2px,-2px);color:var(--fg)}
-.enter{display:none}
-.row.active .enter{display:inline-grid}
-.row.active .arrow{display:none}
-.dot{width:8px;height:8px;border-radius:50%;background:none;box-shadow:inset 0 0 0 1.5px var(--gray-600)}
-.dot.up{background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 18%,transparent)}
-.dot.degraded{background:var(--amber);box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 22%,transparent)}
-.dot.down{background:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent);animation:pulse 2s var(--ease) infinite}
+.dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--gray-500)}
+.dot.up{background:var(--green)}
+.dot.degraded{background:var(--amber)}
+.dot.down{background:var(--red);animation:pulse 2s var(--ease) infinite}
 .dot.checking{animation:pulse 1.2s var(--ease) infinite}
-@keyframes pulse{50%{opacity:.45}}
-.empty{margin:8px 0 40px;padding:40px 16px;border:1px dashed var(--alpha-500);border-radius:var(--r-lg);text-align:center;color:var(--fg-muted)}
+@keyframes pulse{50%{opacity:.4}}
+.acts{position:absolute;display:none;gap:2px}
+.act{display:grid;place-items:center;width:26px;height:26px;border:0;border-radius:var(--r-sm);background:var(--bg-100);color:var(--fg-muted);cursor:pointer;transition:background var(--t-fast),color var(--t-fast)}
+.act:hover{background:var(--gray-100);color:var(--fg)}
+.act:focus-visible{box-shadow:var(--ring)}
+li.pinned .act.pin{color:var(--fg);--star-fill:currentColor}
+@media (hover:hover){.items li:hover .acts,.items li:focus-within .acts{display:flex}.items li:hover .meta,.items li:focus-within .meta{visibility:hidden}}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.tiles .it{height:100%;padding:12px 14px 13px;background:var(--bg-100);box-shadow:0 0 0 1px var(--border)}
+.tiles .it:hover,.tiles .it.active{box-shadow:0 0 0 1px var(--border-hover);background:color-mix(in srgb,var(--bg-100),var(--fg) 3%)}
+.tiles .host{margin-top:2px}
+.tiles .desc{margin-top:6px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tiles .acts{top:8px;right:8px}
+.tiles .lock,#pinned .pinmark{display:none}
+
+.compact{columns:3 240px;column-gap:28px}
+.compact li{break-inside:avoid}
+.compact .it{margin:0 -8px;padding:5px 8px}
+.compact .it:hover,.compact .it.active{background:var(--hover)}
+.compact .name{font-weight:400}
+.compact .host,.compact .desc{display:none}
+.compact .acts{top:50%;right:-6px;transform:translateY(-50%)}
+.compact .act{width:24px;height:24px}
+
+.results .it{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);column-gap:24px;align-items:center;padding:8px 12px}
+.results .it:hover,.results .it.active{background:var(--hover)}
+.results .t1{grid-column:1}
+.results .host{grid-column:1}
+.results .desc{grid-column:2;grid-row:1/3}
+.results .grp{display:inline;margin-left:auto;padding-left:8px;font:400 11px/16px var(--mono);color:var(--fg-faint);white-space:nowrap}
+.results .grp+.meta{margin-left:0}
+.results .acts{top:50%;right:8px;transform:translateY(-50%)}
+.results li:hover .grp{visibility:hidden}
+
+.empty{margin:24px 0 40px;padding:40px 16px;border:1px dashed var(--alpha-500);border-radius:var(--r-lg);text-align:center;color:var(--fg-muted)}
 .empty p{margin:0 0 12px}
 .empty b{color:var(--fg);font-weight:500}
-footer{border-top:1px solid var(--border);margin-top:24px}
-footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;padding-top:20px;padding-bottom:28px;font-size:13px;line-height:18px;color:var(--fg-muted)}
-.keys{display:flex;flex-wrap:wrap;gap:6px 16px}
-.keys span{display:inline-flex;align-items:center;gap:6px}
-footer a{border-radius:4px}
-footer a:hover{color:var(--fg)}
-@media (max-width:719px){
-.row{grid-template-columns:8px minmax(0,1fr) auto 16px;row-gap:2px;align-items:start;padding:10px 14px}
-.row>.dot{margin-top:6px}
-.row>.arrow,.row>.enter{margin-top:2px}
-.desc{grid-column:2/-1;grid-row:2;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.badges{grid-column:3;grid-row:1}}
-@media (max-width:639px){.head{padding:28px 0 16px}}
-@media (max-width:479px){.btn .long{display:none}.btn .short{display:inline}.crumbs .muted,.crumbs .sl.first{display:none}.search .kbds,.checked{display:none}.search input{padding-right:12px}.keys{display:none}}
+main{padding-bottom:64px}
+@media (max-width:719px){.results .it{grid-template-columns:minmax(0,1fr)}.results .desc{display:none}}
+@media (max-width:639px){.tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.tiles .desc{display:none}.search .kbds{display:none}.search input{padding-right:14px}}
 `;
 
-// Filtering, keyboard nav, and status dots. Rows are server-rendered; this only enhances them.
 const DASH_JS = `
-const $=s=>document.querySelector(s),q=$("#q"),G=$("#groups"),live=$("#live");
+const $=s=>document.querySelector(s),q=$("#q"),M=$("#main"),G=$("#groups"),R=$("#results"),live=$("#live");
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+const ORIG=[...G.querySelectorAll("li[data-id]")],byId=new Map(ORIG.map(li=>[li.dataset.id,li]));
+let pins=new Set(PINS.filter(id=>byId.has(id))),recent=store.get("mh.recent",[]).filter(id=>byId.has(id));
+const PRI={Tools:12,Sites:10,Projects:10,Admin:8,Repos:6,Local:4,Scratch:-10,Coursework:-10,Archive:-15};
 const mac=/Mac|iP(hone|ad)/.test(navigator.platform||navigator.userAgent);
 const setHint=()=>{const k1=$("#k1"),k2=$("#k2");if(q.value){k1.textContent="esc";k2.hidden=true}else{k1.textContent=mac?"⌘":"Ctrl";k2.hidden=false}};
 setHint();
-const rows=()=>[...G.querySelectorAll("li:not([hidden]) .row")].filter(r=>r.offsetParent);
+
+const clone=li=>{const c=li.cloneNode(true);c.dataset.clone="";c.hidden=false;c.querySelector(".it").classList.remove("active");return c};
+function fill(sec,ids){sec.querySelector("ul").replaceChildren(...ids.map(id=>clone(byId.get(id))));sec.querySelector(".count").textContent=ids.length}
+function sections(){
+  ORIG.forEach(li=>li.classList.toggle("pinned",pins.has(li.dataset.id)));
+  // A pinned tile moves up to Pinned instead of showing twice.
+  G.querySelectorAll(".tiles").forEach(ul=>{
+    let c=0;for(const li of ul.children){li.hidden=pins.has(li.dataset.id);c+=!li.hidden}
+    const sec=ul.closest(".sec");sec.hidden=!c;sec.querySelector(".count").textContent=c;
+  });
+  fill($("#pinned"),[...pins]);
+  fill($("#recent"),recent.filter(id=>!pins.has(id)).slice(0,8));
+  if(!q.value){$("#pinned").hidden=!pins.size;$("#recent").hidden=!$("#recent li")}
+}
+sections();
+
+const items=()=>[...M.querySelectorAll("li:not([hidden]) > .it")].filter(r=>r.offsetParent);
 let active=null;
 const setActive=r=>{active?.classList.remove("active");active=r;r?.classList.add("active")};
-function filter(){
-  const t=q.value.trim().toLowerCase().split(/\\s+/).filter(Boolean);let total=0;
-  G.querySelectorAll(".group").forEach(sec=>{
-    let c=0;sec.querySelectorAll("li").forEach(li=>{const ok=t.every(w=>li.dataset.k.includes(w));li.hidden=!ok;c+=ok});
-    sec.hidden=!c;sec.querySelector(".count").textContent=c;total+=c;
-    if(sec.hasAttribute("data-collapsed"))sec.open=t.length>0;
-  });
-  $("#empty").hidden=!!total;$("#eq").textContent="\\u201c"+q.value.trim()+"\\u201d";
-  setActive(t.length&&document.activeElement===q?rows()[0]:null);
-  live.textContent=t.length?total+(total===1?" service":" services")+" found":"";
-  setHint();
+
+const words=s=>s.split(/[^a-z0-9]+/).filter(Boolean);
+function subseq(s,w){let i=0;for(const c of s)if(c===w[i])i++;return i===w.length}
+function score(li,terms){
+  const n=li.dataset.n,h=li.dataset.h,k=li.dataset.k;let s=0;
+  for(const w of terms){
+    if(n===w)s+=120;else if(n.startsWith(w))s+=100;else if(words(n).some(p=>p.startsWith(w)))s+=70;
+    else if(n.includes(w))s+=50;else if(h.includes(w))s+=25;else if(k.includes(w))s+=8;
+    else if(w.length>1&&subseq(n,w))s+=4;else return -1;
+  }
+  return s+(PRI[li.dataset.g]??0)+(pins.has(li.dataset.id)?15:0)+(recent.includes(li.dataset.id)?10:0);
 }
-q.addEventListener("input",filter);
-q.addEventListener("focus",()=>q.value&&setActive(rows()[0]));
+function search(){
+  const t=q.value.trim().toLowerCase().split(" ").filter(Boolean),on=t.length>0;
+  G.hidden=on;$("#pinned").hidden=on||!pins.size;$("#recent").hidden=on||!$("#recent li");
+  if(!on){R.hidden=true;$("#empty").hidden=true;setActive(null);live.textContent="";setHint();return}
+  const hits=ORIG.map(li=>[score(li,t),li]).filter(([s])=>s>=0).sort((a,b)=>b[0]-a[0]).slice(0,60);
+  R.querySelector("ul").replaceChildren(...hits.map(([,li])=>clone(li)));
+  R.querySelector(".count").textContent=hits.length;R.hidden=!hits.length;
+  $("#empty").hidden=!!hits.length;$("#eq").textContent="“"+q.value.trim()+"”";
+  setActive(document.activeElement===q?items()[0]:null);
+  live.textContent=hits.length+(hits.length===1?" result":" results");setHint();
+}
+q.addEventListener("input",search);
+q.addEventListener("focus",()=>q.value&&setActive(items()[0]));
 q.addEventListener("blur",()=>setActive(null));
-q.addEventListener("keydown",e=>{
-  if(e.key==="ArrowDown"){const r=rows()[0];if(r){e.preventDefault();r.focus()}}
-  else if(e.key==="Enter"){const r=active||rows()[0];if(r){e.preventDefault();(e.metaKey||e.ctrlKey)&&r.href?window.open(r.href,"_blank","noopener"):r.click()}}
-  else if(e.key==="Escape"){if(q.value){q.value="";filter()}else q.blur()}
+const clear=()=>{q.value="";search()};
+
+function remember(id){recent=[id,...recent.filter(x=>x!==id)].slice(0,12);store.set("mh.recent",recent)}
+function copy(li,text){navigator.clipboard.writeText(text).then(()=>{li.classList.add("copied");live.textContent="Copied "+text;setTimeout(()=>li.classList.remove("copied"),1500)})}
+async function togglePin(id){
+  const on=!pins.has(id);on?pins.add(id):pins.delete(id);sections();if(q.value)search();
+  live.textContent=on?"Pinned":"Unpinned";
+  try{const r=await fetch("/api/pins",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id,pinned:on})});if(!r.ok)throw 0}
+  catch{on?pins.delete(id):pins.add(id);sections();live.textContent="Could not save pin"}
+}
+M.addEventListener("click",e=>{
+  const li=e.target.closest("li[data-id]");if(!li)return;const id=li.dataset.id;
+  const pin=e.target.closest("[data-pin]"),cp=e.target.closest("[data-copy]");
+  if(pin){e.preventDefault();togglePin(id);return}
+  if(cp){e.preventDefault();copy(li,cp.dataset.copy);remember(id);return}
+  if(e.target.closest("a"))remember(id);
 });
-G.addEventListener("keydown",e=>{
-  const rs=rows(),i=rs.indexOf(document.activeElement);if(i<0)return;
-  if(e.key==="ArrowDown"){e.preventDefault();rs[Math.min(i+1,rs.length-1)].focus()}
-  else if(e.key==="ArrowUp"){e.preventDefault();i?rs[i-1].focus():q.focus()}
+M.addEventListener("keydown",e=>{
+  if(e.target===q)return;
+  const rs=items(),i=rs.indexOf(document.activeElement);if(i<0)return;
+  const li=rs[i].closest("li");
+  if(e.key==="ArrowDown"||e.key==="ArrowRight"){e.preventDefault();rs[Math.min(i+1,rs.length-1)].focus()}
+  else if(e.key==="ArrowUp"||e.key==="ArrowLeft"){e.preventDefault();i?rs[i-1].focus():q.focus()}
   else if(e.key==="Escape"){q.focus()}
   else if(e.key==="Enter"&&rs[i].dataset.copy!==undefined){e.preventDefault();rs[i].click()}
+  else if(e.key==="p"){e.preventDefault();togglePin(li.dataset.id)}
+  else if(e.key==="c"&&li.dataset.path){e.preventDefault();copy(li,li.dataset.path)}
   else if(e.key.length===1&&!e.metaKey&&!e.ctrlKey&&e.key!==" "){q.focus()}
+});
+q.addEventListener("keydown",e=>{
+  if(e.key==="ArrowDown"){const r=items()[0];if(r){e.preventDefault();r.focus()}}
+  else if(e.key==="Enter"){const r=active||items()[0];if(r){e.preventDefault();(e.metaKey||e.ctrlKey)&&r.href?(remember(r.closest("li").dataset.id),window.open(r.href,"_blank","noopener")):r.click()}}
+  else if(e.key==="Escape"){if(q.value)clear();else q.blur()}
 });
 document.addEventListener("keydown",e=>{
   const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
   if((e.key==="k"&&(e.metaKey||e.ctrlKey))||(e.key==="/"&&!typing)){e.preventDefault();q.focus();q.select()}
 });
-$("#clear").addEventListener("click",()=>{q.value="";filter();q.focus()});
-G.addEventListener("click",e=>{
-  const r=e.target.closest("[data-copy]");if(!r)return;
-  navigator.clipboard.writeText(r.dataset.copy).then(()=>{r.classList.add("copied");live.textContent="Copied "+r.dataset.copy;setTimeout(()=>r.classList.remove("copied"),1500)});
+$("#clear").addEventListener("click",()=>{clear();q.focus()});
+
+// Collapsed sections remember being opened, per device.
+const opened=new Set(store.get("mh.open",[]));
+G.querySelectorAll("details[data-g]").forEach(d=>{
+  if(opened.has(d.dataset.g))d.open=true;
+  d.addEventListener("toggle",()=>{d.open?opened.add(d.dataset.g):opened.delete(d.dataset.g);store.set("mh.open",[...opened])});
 });
 
-const LBL={up:"Operational",degraded:"Degraded",down:"Down"};
+// Status: dots everywhere; a line under search only when something is wrong.
+const LBL={up:"Up",degraded:"Slow",down:"Down"};
 fetch("/api/status").then(r=>r.json()).then(st=>{
-  const n={up:0,degraded:0,down:0};
-  G.querySelectorAll("li[data-url]").forEach(li=>{
+  const bad=new Map();
+  M.querySelectorAll("li[data-url]").forEach(li=>{
     const s=st[li.dataset.url];if(!s)return;
-    const k=!s.up?"down":s.ms>2500?"degraded":"up";n[k]++;
-    const d=li.querySelector(".dot");d.className="dot "+k;d.title=LBL[k]+(s.code?" \\u00b7 HTTP "+s.code:"")+" \\u00b7 "+s.ms+"ms";
+    const k=!s.up?"down":s.ms>2500?"degraded":"up";
+    const d=li.querySelector(".dot");d.className="dot "+k;d.title=LBL[k]+(s.code?" · HTTP "+s.code:"")+" · "+s.ms+"ms";
     d.querySelector(".sr-only").textContent=LBL[k]+": ";
-    li.querySelector(".badges").innerHTML=k==="up"?"":'<span class="badge '+k+'" aria-hidden="true">'+LBL[k]+"</span>";
-    li.dataset.k+=" "+k;
+    if(k!=="up"){li.querySelector(".meta").innerHTML='<span class="badge '+k+'">'+LBL[k]+"</span>";bad.set(li.dataset.n,[k,li.querySelector(".name").textContent])}
+    li.dataset.k+=" "+(k==="up"?"up":k+" "+LBL[k].toLowerCase());
   });
-  const parts=[["up","operational"],["degraded","degraded"],["down","down"]].filter(([k])=>n[k]);
-  $("#summary").innerHTML=parts.map(([k,l])=>'<li><span class="dot '+k+'" aria-hidden="true"></span>'+n[k]+" "+l+"</li>").join("")+"<li>"+G.querySelectorAll("li[data-k]").length+" services</li>";
-  $("#checked").textContent="Checked just now";
-}).catch(()=>{$("#checked").textContent="Status unavailable"});
+  const a=$("#alert");a.innerHTML=[...bad.values()].map(([k,n])=>'<span><span class="dot '+k+'"></span>'+n+" is "+LBL[k].toLowerCase()+"</span>").join("");a.hidden=!bad.size;
+}).catch(()=>{});
 `;
 
-function row(e: Entry): string {
+function item(e: Entry): string {
   const monitored = !!e.url && e.monitor !== false;
   const link = href(e);
-  const key = [e.name, host(e), e.path, e.description, e.group, ...(e.tags ?? []), e.private ? "private" : "public"].join(" ").toLowerCase();
+  const h = host(e);
+  const key = [e.name, h, e.path, e.description, e.group, ...(e.tags ?? []), e.private ? "private" : "public"].join(" ").toLowerCase();
   // Local-only folders/repos have nothing to link to; clicking copies the path.
   const open = link
-    ? `<a class="row" href="${esc(link)}"${e.path ? ` title="${esc(e.path)}"` : ""}>`
-    : `<div class="row" tabindex="0" role="button" data-copy="${esc(e.path ?? "")}" title="Copy path">`;
-  const icon = link ? ARROW : COPY;
-  return `<li data-k="${esc(key)}"${monitored ? ` data-url="${esc(e.url!)}"` : ""}>${open}
-<span class="dot${monitored ? " checking" : ""}" title="${monitored ? "Checking…" : "Not monitored"}"><span class="sr-only">${monitored ? "Checking" : "Not monitored"}: </span></span>
-<span class="id"><span class="name">${esc(e.name)}${e.private && link ? `<span class="lock" title="Private">${LOCK}<span class="sr-only"> (private)</span></span>` : ""}</span><span class="host">${esc(host(e))}</span></span>
-<span class="desc">${esc(e.description)}</span><span class="badges">${e.updated ? `<span class="when">${when(e.updated)}</span>` : ""}</span>${icon}<kbd class="enter" aria-hidden="true">↵</kbd>${link ? "</a>" : "</div>"}</li>`;
+    ? `<a class="it" href="${esc(link)}" title="${esc(e.description || h)}">`
+    : `<div class="it" tabindex="0" role="button" data-copy="${esc(e.path ?? "")}" title="Copy ${esc(e.path ?? "")}">`;
+  const acts = [
+    e.url && e.repo ? `<a class="act" href="${esc(e.repo)}" title="Repository" aria-label="Repository">${REPO}</a>` : "",
+    link && e.path ? `<button class="act" type="button" data-copy="${esc(e.path)}" title="Copy path (c)" aria-label="Copy path">${COPY_SM}</button>` : "",
+    `<button class="act pin" type="button" data-pin title="Pin (p)" aria-label="Pin">${STAR}</button>`,
+  ].join("");
+  const data = [
+    `data-id="${esc(entryId(e))}"`,
+    `data-n="${esc(e.name.toLowerCase())}"`,
+    `data-h="${esc(h.toLowerCase())}"`,
+    `data-g="${esc(e.group)}"`,
+    `data-k="${esc(key)}"`,
+    monitored ? `data-url="${esc(e.url!)}"` : "",
+    e.path ? `data-path="${esc(e.path)}"` : "",
+  ].join(" ");
+  const dot = monitored ? `<span class="dot checking" title="Checking…"><span class="sr-only">Checking: </span></span>` : "";
+  const lock = e.private && link ? `<span class="lock" title="Private">${LOCK}<span class="sr-only">(private)</span></span>` : "";
+  return `<li ${data}>${open}<span class="t1">${dot}<span class="name">${esc(e.name)}</span>${lock}<span class="pinmark" title="Pinned">${STAR}</span><span class="grp">${esc(e.group)}</span><span class="meta">${when(e.updated)}</span></span><span class="host">${esc(h)}</span><span class="desc">${esc(e.description)}</span>${link ? "</a>" : "</div>"}<span class="acts">${acts}</span></li>`;
 }
 
-export function renderDash(entries: Entry[], session: Session, nonce: string): string {
+const shell = (id: string, title: string, kind: string, note = "") =>
+  `<section class="sec" id="${id}" aria-labelledby="${id}-h" hidden><div class="sec-h"><h2 id="${id}-h">${title}</h2><span class="count">0</span>${note ? `<span class="note">${note}</span>` : ""}</div><ul class="items ${kind}"></ul></section>`;
+
+export function renderDash(entries: Entry[], session: Session, nonce: string, pins: string[]): string {
   const groups = [...new Set(entries.map((e) => e.group))].sort((a, b) => rank(a) - rank(b));
   const sections = groups
-    .map((g, i) => {
-      const items = entries.filter((e) => e.group === g);
-      const head = `<h2 id="g${i}">${esc(g)}</h2><span class="count">${items.length}</span>`;
-      const list = `<ul class="list">${items.map(row).join("")}</ul>`;
+    .map((g) => {
+      const list = entries.filter((e) => e.group === g);
+      const id = `sec-${slug(g)}`;
+      const head = `<h2 id="${id}-h">${esc(g)}</h2><span class="count">${list.length}</span>`;
+      const ul = `<ul class="items ${TILE_GROUPS.has(g) ? "tiles" : "compact"}">${list.map(item).join("")}</ul>`;
       return COLLAPSED.has(g)
-        ? `<details class="group" data-collapsed aria-labelledby="g${i}"><summary class="g-h">${CHEVRON}${head}</summary>${list}</details>`
-        : `<section class="group" aria-labelledby="g${i}"><div class="g-h">${head}</div>${list}</section>`;
+        ? `<details class="sec" id="${id}" data-g="${esc(g)}"><summary class="sec-h">${CHEVRON}${head}</summary>${ul}</details>`
+        : `<section class="sec" id="${id}" aria-labelledby="${id}-h"><div class="sec-h">${head}</div>${ul}</section>`;
     })
     .join("");
+  const pinsJson = JSON.stringify(pins).replace(/</g, "\\u003c");
 
   return page({
-    title: "Launchpad · mackhaymond.co",
-    pageBg: "var(--bg-200)",
+    title: "Launchpad",
+    pageBg: "var(--bg-100)",
     head: `<meta name="robots" content="noindex">`,
     css: DASH_CSS,
     body: `<a class="skip" href="#q">Skip to search</a>
 <header class="top"><div class="wrap">
-  <div class="crumbs"><span class="mark" aria-hidden="true">MH</span><span class="sl first" aria-hidden="true">/</span><span class="muted">mackhaymond.co</span><span class="sl" aria-hidden="true">/</span><span>dash</span></div>
-  <nav class="top-r" aria-label="Account">
-    <a class="btn btn-ghost" href="/?public"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M12.5 8h-9M7 4.5 3.5 8 7 11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="long">Public homepage</span><span class="short">Homepage</span></a>
-    <span class="avatar" title="Signed in as ${esc(session.email)}" role="img" aria-label="Signed in as ${esc(session.email)}">${esc(session.email[0] ?? "?")}</span>
-  </nav>
+  <a href="/?public" title="Public homepage">← mackhaymond.co</a>
+  <a href="/cdn-cgi/access/logout" title="Signed in as ${esc(session.email)}">Log out</a>
 </div></header>
 <main class="wrap" id="main">
-  <div class="head">
-    <div><h1>Launchpad</h1><ul class="summary" id="summary" aria-label="Service status summary"><li>${entries.length} services</li></ul></div>
-    <span class="checked" id="checked">Checking…</span>
-  </div>
-  <div class="search" role="search">
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <label class="sr-only" for="q">Filter services</label>
-    <input id="q" type="search" placeholder="Search services, hosts, repos…" autocomplete="off" spellcheck="false" aria-describedby="hint" aria-controls="groups" autofocus>
-    <span class="kbds" id="hint" aria-hidden="true"><kbd id="k1">⌘</kbd><kbd id="k2">K</kbd></span>
+  <div class="bar">
+    <div class="search" role="search">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <label class="sr-only" for="q">Search</label>
+      <input id="q" type="search" placeholder="Search ${entries.length} things…" autocomplete="off" spellcheck="false" aria-controls="main" autofocus>
+      <span class="kbds" aria-hidden="true"><kbd id="k1">⌘</kbd><kbd id="k2">K</kbd></span>
+    </div>
+    <p id="alert" role="status" hidden></p>
   </div>
   <p class="sr-only" id="live" aria-live="polite"></p>
-  <div class="groups" id="groups">${sections}</div>
-  <div class="empty" id="empty" hidden><p>No services match <b id="eq"></b></p><button class="btn btn-secondary" type="button" id="clear">Clear search</button></div>
+  ${shell("results", "Results", "results")}
+  ${shell("pinned", "Pinned", "tiles")}
+  ${shell("recent", "Recent", "tiles", "on this device")}
+  <div id="groups">${sections}</div>
+  <div class="empty" id="empty" hidden><p>Nothing matches <b id="eq"></b></p><button class="btn btn-secondary" type="button" id="clear">Clear search</button></div>
 </main>
-<footer><div class="wrap">
-  <div class="keys" aria-hidden="true"><span><kbd>/</kbd> search</span><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> clear</span></div>
-  <a href="/cdn-cgi/access/logout">Log out</a>
-</div></footer>
-<script nonce="${nonce}">${DASH_JS}</script>`,
+<script nonce="${nonce}">const PINS=${pinsJson};${DASH_JS}</script>`,
   });
 }
 
