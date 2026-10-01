@@ -12,7 +12,7 @@
   // Fonts, favicon, and CSS. All public; anything private is rendered by the Worker.
   "assets": { "directory": "public", "binding": "ASSETS" },
   // The private half of the launchpad catalog (key "catalog", a JSON array of entries).
-  "kv_namespaces": [{ "binding": "CATALOG", "id": "TODO" }],
+  "kv_namespaces": [{ "binding": "CATALOG", "id": "4d193cca373b4f79b62458401e77cdb1" }],
   "observability": { "enabled": true },
   "vars": {
     "OWNER_EMAILS": "mack.haymond@icloud.com,mackhaymond@gmail.com",
@@ -20,6 +20,6 @@
     // routes every other non-public path through /dash. Until ACCESS_AUD is set, nothing
     // private is served.
     "ACCESS_TEAM_DOMAIN": "mackhaymond.cloudflareaccess.com",
-    "ACCESS_AUD": ""
+    "ACCESS_AUD": "1086a9dcdb253f8e4b7942448f96779c4d7fe3432035d905534dd6812b25ab86"
   }
 }
