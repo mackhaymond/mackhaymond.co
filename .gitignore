@@ -3,4 +3,5 @@ node_modules/
 .dev.vars*
 .env*
 dist/
+*.private.*
 .DS_Store

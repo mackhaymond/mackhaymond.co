@@ -1,11 +1,8 @@
 # mackhaymond.co
 
-Personal launchpad on Cloudflare Workers.
+My personal site, running on a single Cloudflare Worker.
 
-- `/` — public homepage (name, featured projects, links, log in)
-- `/dash` and everything else — private launchpad of everything I host, behind Cloudflare Access (me only)
-- Once logged in, `/` redirects to `/dash`; the public page is only reachable deliberately via `/?public`
+- `/` is a public homepage with a few projects and links.
+- Everything else is a private launchpad behind Cloudflare Access.
 
-The Worker verifies the Access JWT itself (defense in depth), and private entries are never sent to unauthenticated visitors.
-
-Status: scaffolding — research + design in progress.
+The list of private links isn't in this repo. It's loaded at runtime, so this repo only holds the site itself.
