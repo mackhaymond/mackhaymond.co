@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mackhaymond-co",
+  "main": "src/index.ts",
+  "routes": [
+    { "pattern": "mackhaymond.co", "custom_domain": true },
+    { "pattern": "www.mackhaymond.co", "custom_domain": true }
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  "compatibility_date": "2026-09-01",
+  // Fonts, favicon, and CSS. All public; anything private is rendered by the Worker.
+  "assets": { "directory": "public", "binding": "ASSETS" },
+  // The private half of the launchpad catalog (key "catalog", a JSON array of entries).
+  "kv_namespaces": [{ "binding": "CATALOG", "id": "TODO" }],
+  "observability": { "enabled": true },
+  "vars": {
+    "OWNER_EMAILS": "mack.haymond@icloud.com,mackhaymond@gmail.com",
+    // The Access application covers /dash* and /api/*; the Worker also verifies its JWT and
+    // routes every other non-public path through /dash. Until ACCESS_AUD is set, nothing
+    // private is served.
+    "ACCESS_TEAM_DOMAIN": "mackhaymond.cloudflareaccess.com",
+    "ACCESS_AUD": ""
+  }
+}

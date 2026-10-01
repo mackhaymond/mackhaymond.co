@@ -14,13 +14,29 @@ Anything matching `*.private.*` is gitignored for local scratch copies.
 Other sessions are told (via the global CLAUDE.md) to come here whenever they
 deploy or retire something with a URL.
 
-- **Public project** (fine for anyone to see): add an entry to the public
-  catalog in the repo, commit, push, deploy.
-- **Private tool / dashboard / admin surface**: add it to the private catalog
-  in KV, never the repo. No redeploy needed.
+- **Public project** (fine for anyone to see): add an `Entry` to
+  `PUBLIC_CATALOG` in `src/catalog.ts` (`featured: true` to show it on `/`),
+  then `npm run typecheck && npm run deploy`, commit, push.
+- **Private tool / dashboard / admin surface**: KV only, never the repo. No
+  redeploy needed:
+  ```
+  npm run catalog:pull     # KV key "catalog" -> catalog.private.json (gitignored)
+  # edit catalog.private.json
+  npm run catalog:push
+  ```
+  Groups in use: `Tools` (apps I log into), `Sites` (private/personal sites),
+  `Admin` (third-party dashboards, `"monitor": false`).
+- **Retired**: remove the entry the same way.
 
-<!-- TODO: replace with exact file path, entry schema, KV namespace/key, and
-the one-line commands once the Worker is built. -->
+The `Entry` type in `src/catalog.ts` is the schema for both. Every entry with
+a `url` gets a status dot on `/dash` unless `"monitor": false`.
 
-Entry fields (planned): `name`, `url`, `description`, `group`, `public`
-(bool), optional `repo`, `status` check.
+## Layout
+
+- `src/index.ts`: routing and auth gate. Public paths: `/`, `/robots.txt`,
+  and static assets in `public/`.
+- `src/access.ts`: verifies the Access JWT (header or `CF_Authorization`
+  cookie) and checks the email against `OWNER_EMAILS`.
+- `src/render.ts`: both pages (Geist/Vercel styling, server-rendered).
+- Local dev: `.dev.vars` with `DEV=1` treats every request as the owner;
+  seed local KV with `npx wrangler kv key put catalog --binding CATALOG --local --path catalog.private.json`.
